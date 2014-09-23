@@ -1,0 +1,10 @@
+Shortest path to 1: 1: cost = 0
+Shortest path to 2: 1 2: cost = 6
+Shortest path to 3: 1 7 9 10 4 8 5 3: cost = 35
+Shortest path to 4: 1 7 9 10 4: cost = 21
+Shortest path to 5: 1 7 9 10 4 8 5: cost = 28
+Shortest path to 6: 1 7 9 10 4 8 5 3 6: cost = 37
+Shortest path to 7: 1 7: cost = 6
+Shortest path to 8: 1 7 9 10 4 8: cost = 25
+Shortest path to 9: 1 7 9: cost = 11
+Shortest path to 10: 1 7 9 10: cost = 15
