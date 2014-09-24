@@ -85,6 +85,10 @@ public interface Graph {
      */
     boolean hasEdge(Vertex v, Vertex w);
 
+    Iterable<Edge> getEdges(String v, String w);
+
+    Iterable<Edge> getEdges(Vertex v, Vertex w);
+
     /**
      * is v a vertex in the graph.  Convenience method for using a string label.
      * @param v

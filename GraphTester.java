@@ -4,9 +4,7 @@
  */
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,9 +18,10 @@ public class GraphTester {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-	Graph g = readFile("graphPosLittle.txt");
+	Graph g = readFile("graphPosMidA.txt");
 	if (g == null) { System.exit(0); }
 	printGraph(g);
+	printShortestPaths(g, g.getVertex("1"));
     }
 
     public static void printGraph(Graph g) {
@@ -37,6 +36,29 @@ public class GraphTester {
             System.out.println();
 
         }
+    }
+
+    public static void printShortestPaths(Graph g, Vertex v) {	
+	TreeMap<Vertex, String> shortestPaths = AdjacencyListDirectedGraph.getShortestPaths(g, v);
+	HashMap<Vertex, Float> distance = new HashMap<Vertex, Float>();
+	HashMap<Vertex, Vertex> predecessor = new HashMap<Vertex, Vertex>();
+
+	for (Map.Entry<Vertex, String> entry : shortestPaths.entrySet()) {
+	    String[] data = entry.getValue().split(" ");
+	    distance.put(entry.getKey(), Float.parseFloat(data[0]));
+	    predecessor.put(entry.getKey(), g.getVertex(data[1]));
+	}
+
+	for (Vertex w : g.getVertices()) {
+	    String path = "";
+	    Vertex currentVertex = w;
+	    while (currentVertex != null) {
+		path = " " + currentVertex + path;
+		currentVertex = predecessor.get(currentVertex);
+	    }
+	    System.out.println("Shortest path to " + w + ":" + path + ": cost = " + distance.get(w));
+	}
+
     }
     
     public static AdjacencyListDirectedGraph readFile(String file) {

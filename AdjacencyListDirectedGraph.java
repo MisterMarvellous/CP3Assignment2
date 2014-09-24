@@ -2,12 +2,12 @@ import java.util.*;
 
 public class AdjacencyListDirectedGraph implements Graph {
 
-    private TreeMap<Vertex, TreeMap<Edge, Vertex>> adjacencyList;
+    private TreeMap<Vertex, TreeMap<String, Edge>> adjacencyList;
     private HashMap<String, Vertex> vertexList;
     private int edgeCount;
 
     public AdjacencyListDirectedGraph() {
-	adjacencyList = new TreeMap<Vertex, TreeMap<Edge, Vertex>>();
+	adjacencyList = new TreeMap<Vertex, TreeMap<String, Edge>>();
 	vertexList = new HashMap<String, Vertex>();
 	edgeCount = 0;
     }
@@ -37,8 +37,23 @@ public class AdjacencyListDirectedGraph implements Graph {
 	if (!vertexList.containsKey(w)) {
 	    vertexList.put(w, new AdjacencyListVertex(w));
 	}
+	Vertex vv = vertexList.get(v);
+	Vertex vw = vertexList.get(w);
 
-	addEdge(vertexList.get(v), vertexList.get(w), weight);
+	if (!adjacencyList.containsKey(vv)) {
+	    adjacencyList.put(vv, new TreeMap<String, Edge>());
+	}
+	if (!adjacencyList.containsKey(vw)) {
+	    adjacencyList.put(vw, new TreeMap<String, Edge>());
+	}
+	Set<String> keys = adjacencyList.get(vv).keySet();
+	int sameEdgeCount = 0;
+	for (Iterator<String> i = keys.iterator(); i.hasNext();) {
+	    sameEdgeCount = Math.max(Integer.parseInt(i.next().split(" ")[1]), sameEdgeCount);
+	}
+	
+	adjacencyList.get(vv).put(w+" "+sameEdgeCount, new Edge(Integer.toString(++edgeCount), weight, vv, vw));
+
     }
 
     public void addEdge(Vertex v, Vertex w, float weight) {
@@ -48,15 +63,7 @@ public class AdjacencyListDirectedGraph implements Graph {
 	if (!vertexList.containsKey(w.getLabel())) {
 	    vertexList.put(w.getLabel(), w);
 	}
-	if (!adjacencyList.containsKey(v)) {
-	    adjacencyList.put(v, new TreeMap<Edge, Vertex>());
-	}
-	if (!adjacencyList.containsKey(w)) {
-	    adjacencyList.put(w, new TreeMap<Edge, Vertex>());
-	}
-	if (!adjacencyList.get(v).containsValue(w)) {
-	    adjacencyList.get(v).put(new Edge(Integer.toString(++edgeCount), weight, v, w), w);
-	}
+	addEdge(v.getLabel(), w.getLabel(), weight);
     }
 
     /**
@@ -74,7 +81,12 @@ public class AdjacencyListDirectedGraph implements Graph {
      * @return
      */
     public Iterable<Vertex> adjacentTo(Vertex v) {
-	return adjacencyList.get(v).values();
+	Iterable<Edge> incidentEdges = adjacencyList.get(v).values();
+	TreeSet<Vertex> adjs = new TreeSet<Vertex>();
+	for (Iterator<Edge> i = incidentEdges.iterator(); i.hasNext();) {
+	    adjs.add(i.next().getDestination());
+	}
+	return adjs;
     }
 
     /**
@@ -120,7 +132,32 @@ public class AdjacencyListDirectedGraph implements Graph {
      * @return
      */
     public boolean hasEdge(Vertex v, Vertex w) {
-	return adjacencyList.get(v).containsValue(w);
+	return adjacencyList.get(v).containsKey(w.getLabel()+" 0");
+    }
+
+    public Iterable<Edge> getEdges(String v, String w) {
+	return getEdges(vertexList.get(v), vertexList.get(w));
+    }
+
+    public Iterable<Edge> getEdges(Vertex v, Vertex w) {
+	LinkedList<Edge> matchingEdges = new LinkedList<Edge>();
+	for (int i = 0;;i++) {
+	    Edge e = adjacencyList.get(v).get(w.getLabel()+" "+i);
+	    if (e==null) break;
+	    matchingEdges.add(e);
+	}
+	return matchingEdges;
+    }
+
+    public static Edge getSmallestEdge(Iterable<Edge> edges) {
+	Edge smallestEdge = new Edge(null, Float.MAX_VALUE, null, null);
+	for (Iterator<Edge> i = edges.iterator(); i.hasNext();) {
+	    Edge e = i.next();
+	    if (e.getWeight() < smallestEdge.getWeight()) {
+		smallestEdge = e;
+	    }
+	}
+	return smallestEdge;
     }
 
     /**
@@ -152,32 +189,69 @@ public class AdjacencyListDirectedGraph implements Graph {
 
     public static TreeMap<Vertex, String> getShortestPaths(Graph g, Vertex s) {
 	Iterable<Vertex> allVerts = g.getVertices();
+	HashMap<Vertex, Float> distance = new HashMap<Vertex, Float>();
+	HashMap<Vertex, Vertex> predecessor = new HashMap<Vertex, Vertex>();
+	PriorityQueue<Vertex> q = new PriorityQueue<Vertex>(((Collection)allVerts).size(),
+							    new Comparator<Vertex>() {
+							       public int compare(Vertex a, Vertex b) {
+								   return (int)(distance.get(a) - distance.get(b));
+							       }
+							    });	
+
 	for (Iterator<Vertex> i = allVerts.iterator(); i.hasNext();) {
-	    i.next().setToUndiscovered();
+	    Vertex v = i.next();
+	    v.setToUndiscovered();
+	    distance.put(v, (((AdjacencyListVertex)v).compareTo(s)==0?0.0f:Float.MAX_VALUE));
+	    predecessor.put(v, null);
+	    q.offer(v);
 	}
 
-	return new TreeMap<Vertex, String>();
-    }
-
-    public int getInDegree(String v) {
-	return getInDegree(vertexList.get(v));
-    }
-
-    public int getInDegree(Vertex v) {
-	int inDegree = 0;
-	Collection<TreeMap<Edge, Vertex>> vertLists = adjacencyList.values();
-	Collection<Vertex> verts = new LinkedList<Vertex>();
-	for (Iterator<TreeMap<Edge, Vertex>> i = vertLists.iterator(); i.hasNext();) {
-	    verts.addAll(i.next().values());
-	}
-	
-	for (Iterator<Vertex> i = verts.iterator(); i.hasNext();) {
-	    if (((AdjacencyListVertex)v).compareTo(i.next())==0) {
-		inDegree++;
+	while (q.size() > 0) {
+	    Vertex v = q.poll();
+	    if (v.isUndiscovered()) {
+		if (distance.get(v) == Float.MAX_VALUE) { return null; }
+		v.setToDiscovered();
+		Iterable<Vertex> adjVerts = g.adjacentTo(v);
+		for (Iterator<Vertex> i = adjVerts.iterator(); i.hasNext();) {
+		    Vertex w = i.next();
+		    if (w.isUndiscovered()) {
+			Edge e = AdjacencyListDirectedGraph.getSmallestEdge(g.getEdges(v, w));
+			if (distance.get(v) + e.getWeight() < distance.get(w)) {
+			    distance.remove(w);
+			    distance.put(w, distance.get(v) + e.getWeight());
+			    predecessor.remove(w);
+			    predecessor.put(w, v);
+			    q.remove(w);
+			    q.offer(w);
+			}
+		    }
+		}
 	    }
 	}
 
+	TreeMap<Vertex, String> resultMap = new TreeMap<Vertex, String>();
+	for (Iterator<Vertex> i = allVerts.iterator(); i.hasNext();) {
+	    Vertex v = i.next();
+	    resultMap.put(v, Float.toString(distance.get(v)) + " " + predecessor.get(v));
+	}
+
+	return resultMap;
+    }
+
+    public int getInDegree(String v) {
+	int inDegree = 0;
+	Iterable<TreeMap<String, Edge>> adjMaps = adjacencyList.values();
+	for (Iterator<TreeMap<String, Edge>> i = adjMaps.iterator(); i.hasNext();) {
+	    Iterable<String> adjLabels = i.next().keySet();
+	    for (Iterator<String> j = adjLabels.iterator(); j.hasNext();) {
+		if (j.next().split(" ")[0].equals(v)) inDegree++;
+	    }
+	}
 	return inDegree;
+    }
+
+    public int getInDegree(Vertex v) {
+	return getInDegree(v.getLabel());
     }
 
     public Iterable<Vertex> getZeroInDegree() {
