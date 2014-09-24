@@ -187,7 +187,7 @@ public class AdjacencyListDirectedGraph implements Graph {
 	return vertexList.get(v);
     }
 
-    public static TreeMap<Vertex, String> getShortestPaths(Graph g, Vertex s) {
+    public static TreeMap<Vertex, String> getShortestPathsPriorityQueue(Graph g, Vertex s) {
 	Iterable<Vertex> allVerts = g.getVertices();
 	HashMap<Vertex, Float> distance = new HashMap<Vertex, Float>();
 	HashMap<Vertex, Vertex> predecessor = new HashMap<Vertex, Vertex>();
@@ -223,6 +223,55 @@ public class AdjacencyListDirectedGraph implements Graph {
 			    predecessor.put(w, v);
 			    q.remove(w);
 			    q.offer(w);
+			}
+		    }
+		}
+	    }
+	}
+
+	TreeMap<Vertex, String> resultMap = new TreeMap<Vertex, String>();
+	for (Iterator<Vertex> i = allVerts.iterator(); i.hasNext();) {
+	    Vertex v = i.next();
+	    resultMap.put(v, Float.toString(distance.get(v)) + " " + predecessor.get(v));
+	}
+
+	return resultMap;
+    }
+
+    public static TreeMap<Vertex, String> getShortestPathsList(Graph g, Vertex s) {
+	Collection<Vertex> allVerts = (Collection<Vertex>)(g.getVertices());
+	HashMap<Vertex, Float> distance = new HashMap<Vertex, Float>();
+	HashMap<Vertex, Vertex> predecessor = new HashMap<Vertex, Vertex>();
+	List<Vertex> l = new LinkedList<Vertex>(allVerts);
+	Comparator<Vertex> c = new Comparator<Vertex>() {
+	    public int compare(Vertex a, Vertex b) {
+		return (int)(distance.get(a) - distance.get(b));
+	    }
+	};
+
+	for (Vertex v : allVerts) {
+	    v.setToUndiscovered();
+	    distance.put(v, (((AdjacencyListVertex)v).compareTo(s)==0?0.0f:Float.MAX_VALUE));
+	    predecessor.put(v, null);
+	}
+
+	while (l.size() > 0) {
+	    Collections.sort(l, c);
+	    Vertex v = l.get(0);
+	    l.remove(0);
+	    if (v.isUndiscovered()) {
+		if (distance.get(v) == Float.MAX_VALUE) { return null; }
+		v.setToDiscovered();
+		Iterable<Vertex> adjVerts = g.adjacentTo(v);
+		for (Iterator<Vertex> i = adjVerts.iterator(); i.hasNext();) {
+		    Vertex w = i.next();
+		    if (w.isUndiscovered()) {
+			Edge e = AdjacencyListDirectedGraph.getSmallestEdge(g.getEdges(v, w));
+			if (distance.get(v) + e.getWeight() < distance.get(w)) {
+			    distance.remove(w);
+			    distance.put(w, distance.get(v) + e.getWeight());
+			    predecessor.remove(w);
+			    predecessor.put(w, v);
 			}
 		    }
 		}

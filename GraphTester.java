@@ -18,10 +18,28 @@ public class GraphTester {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-	Graph g = readFile("graphPosMidA.txt");
+	String file = null;
+	boolean timing = false;
+	boolean usePriorityQueue = true;
+	if (args.length > 0) { file = args[0]; }
+	else {
+	    System.out.println("usage: java GraphTester file [dataStructure]\n\tdataStructure: pq for priority queue or l for list");
+	    System.exit(0);
+	}
+	if (args.length > 1) {
+	    switch (args[1]) {
+	    case "pq":
+		timing = true;
+		break;
+	    case "l":
+		timing = true;
+		usePriorityQueue = false;
+		break;
+	    }
+	}
+	Graph g = readFile(file);
 	if (g == null) { System.exit(0); }
-	printGraph(g);
-	printShortestPaths(g, g.getVertex("1"));
+	printShortestPaths(g, g.getVertex("1"), timing, usePriorityQueue);
     }
 
     public static void printGraph(Graph g) {
@@ -38,25 +56,34 @@ public class GraphTester {
         }
     }
 
-    public static void printShortestPaths(Graph g, Vertex v) {	
-	TreeMap<Vertex, String> shortestPaths = AdjacencyListDirectedGraph.getShortestPaths(g, v);
-	HashMap<Vertex, Float> distance = new HashMap<Vertex, Float>();
-	HashMap<Vertex, Vertex> predecessor = new HashMap<Vertex, Vertex>();
-
-	for (Map.Entry<Vertex, String> entry : shortestPaths.entrySet()) {
-	    String[] data = entry.getValue().split(" ");
-	    distance.put(entry.getKey(), Float.parseFloat(data[0]));
-	    predecessor.put(entry.getKey(), g.getVertex(data[1]));
-	}
-
-	for (Vertex w : g.getVertices()) {
-	    String path = "";
-	    Vertex currentVertex = w;
-	    while (currentVertex != null) {
-		path = " " + currentVertex + path;
-		currentVertex = predecessor.get(currentVertex);
+    public static void printShortestPaths(Graph g, Vertex v, boolean timing, boolean usePriorityQueue) {
+	long startTime = System.nanoTime();
+	TreeMap<Vertex, String> shortestPaths = (usePriorityQueue?
+						 AdjacencyListDirectedGraph.getShortestPathsPriorityQueue(g, v):
+						 AdjacencyListDirectedGraph.getShortestPathsList(g, v));
+	long endTime = System.nanoTime();
+	
+	if (timing) { System.out.println("Finding shortest paths with a " + (usePriorityQueue?"priority queue":"list") + " took " + ((endTime-startTime)/1000000.0) + " ms"); }
+	else {
+	    HashMap<Vertex, Float> distance = new HashMap<Vertex, Float>();
+	    HashMap<Vertex, Vertex> predecessor = new HashMap<Vertex, Vertex>();
+	    
+	    for (Map.Entry<Vertex, String> entry : shortestPaths.entrySet()) {
+		String[] data = entry.getValue().split(" ");
+		distance.put(entry.getKey(), Float.parseFloat(data[0]));
+		predecessor.put(entry.getKey(), g.getVertex(data[1]));
 	    }
-	    System.out.println("Shortest path to " + w + ":" + path + ": cost = " + distance.get(w));
+	    
+	    for (Vertex w : g.getVertices()) {
+		String path = "";
+		Vertex currentVertex = w;
+		while (currentVertex != null) {
+		    path = " " + currentVertex + path;
+		    currentVertex = predecessor.get(currentVertex);
+		}
+		System.out.println("Shortest path to " + w + ":" + path + ": cost = " + distance.get(w));
+	    }
+
 	}
 
     }
