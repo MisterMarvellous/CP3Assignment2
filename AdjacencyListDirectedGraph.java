@@ -191,7 +191,7 @@ public class AdjacencyListDirectedGraph implements Graph {
 	Iterable<Vertex> allVerts = g.getVertices();
 	HashMap<Vertex, Float> distance = new HashMap<Vertex, Float>();
 	HashMap<Vertex, Vertex> predecessor = new HashMap<Vertex, Vertex>();
-	PriorityQueue<Vertex> q = new PriorityQueue<Vertex>(((Collection)allVerts).size(),
+	PriorityQ<Vertex> q = new PriorityQ<Vertex>(((Collection)allVerts).size(),
 							    new Comparator<Vertex>() {
 							       public int compare(Vertex a, Vertex b) {
 								   return (int)(distance.get(a) - distance.get(b));
@@ -201,13 +201,13 @@ public class AdjacencyListDirectedGraph implements Graph {
 	for (Iterator<Vertex> i = allVerts.iterator(); i.hasNext();) {
 	    Vertex v = i.next();
 	    v.setToUndiscovered();
-	    distance.put(v, (((AdjacencyListVertex)v).compareTo(s)==0?0.0f:Float.MAX_VALUE));
+	    distance.put(v, ((v).compareTo(s)==0?0.0f:Float.MAX_VALUE));
 	    predecessor.put(v, null);
 	    q.offer(v);
 	}
 
 	while (q.size() > 0) {
-	    Vertex v = q.poll();
+       	    Vertex v = q.poll();
 	    if (v.isUndiscovered()) {
 		if (distance.get(v) == Float.MAX_VALUE) { return null; }
 		v.setToDiscovered();

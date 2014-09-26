@@ -39,7 +39,22 @@ public class GraphTester {
 	}
 	Graph g = readFile(file);
 	if (g == null) { System.exit(0); }
-	printShortestPaths(g, g.getVertex("1"), timing, usePriorityQueue);
+      	printShortestPaths(g, g.getVertex("1"), timing, usePriorityQueue);
+	
+	/*PriorityQ<Integer> q = new PriorityQ<Integer>(11, new Comparator<Integer>() {
+		public int compare(Integer a, Integer b) {
+		    return b - a;
+		}
+	    });
+	int values[] = {39, 17, 75, 30, 21, 24, 88, 66, 14, 55, 40};
+	for (int val : values) {
+	    q.offer(val);
+	}
+	while (q.size()>0) {
+	    System.out.println(q.poll());
+	    System.out.println(q);
+	}
+	*/
     }
 
     public static void printGraph(Graph g) {

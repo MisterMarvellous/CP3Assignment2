@@ -6,7 +6,7 @@
  *
  * @author lewi0146
  */
-public interface Vertex {
+public interface Vertex extends Comparable<Vertex>{
 
     /**
      * Get a label associated with this vertex.

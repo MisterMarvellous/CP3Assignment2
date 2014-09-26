@@ -6,7 +6,7 @@
  *
  * @author lewi0146
  */
-public class AdjacencyListVertex implements Vertex, Comparable<Vertex> {
+public class AdjacencyListVertex implements Vertex {
 
     private String label;
     private boolean discovered;
